@@ -585,7 +585,7 @@ function renderAmbReport(report, enhanced){
   document.getElementById('amb-empty').style.display='none';
   const c=document.getElementById('amb-result'); c.innerHTML='';
   const card=document.createElement('div'); card.className='result-card';
-  card.innerHTML=`<div class="card-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="card-hdr-title">曖昧性検出レポート</span></div><div class="card-body">${esc(report.split('## 補完済み要件定義書')[0])}</div>`;
+  card.innerHTML=`<div class="card-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="card-hdr-title">曖昧性検出レポート</span></div><div class="card-body">${esc(report.split('### 補完済み要件定義書')[0])}</div>`;
   c.appendChild(card);
   if(enhanced){
     const ec=document.createElement('div'); ec.className='enhanced-card';
