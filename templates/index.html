@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>シーケンス図ジェネレーター</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8f7f4; --surface: #fff; --border: #e2e0da; --border-strong: #c8c5bc;
+      --text: #1a1917; --text-muted: #6b6860; --text-hint: #a8a59e;
+      --accent: #2d5a8e; --accent-light: #e8f0f8; --accent-text: #1a3d63;
+      --danger: #c0392b; --danger-light: #fdf0ee;
+      --success: #1a6b3a; --success-light: #edf7f1;
+      --warning-light: #fef9ec; --warning-text: #7a5c00; --warning-border: #e8c84a;
+      --mono: 'IBM Plex Mono', monospace; --sans: 'Noto Sans JP', sans-serif;
+      --radius: 8px; --radius-lg: 12px;
+    }
+    html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+    .layout { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+
+    /* Sidebar */
+    .sidebar { display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--border); overflow: hidden; }
+    .sidebar-top { padding: 16px; border-bottom: 1px solid var(--border); }
+    .app-title { font-size: 15px; font-weight: 500; }
+    .app-title-sub { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+    .upload-section { padding: 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+    .section-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .upload-zone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); padding: 20px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--bg); }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: var(--accent-light); }
+    .upload-zone input { display: none; }
+    .upload-icon { font-size: 26px; margin-bottom: 6px; }
+    .upload-text { font-size: 13px; color: var(--text-muted); }
+    .upload-hint { font-size: 11px; color: var(--text-hint); margin-top: 4px; }
+    .file-info { background: var(--success-light); border: 1px solid #a8d5b8; border-radius: var(--radius); padding: 9px 12px; align-items: center; gap: 8px; display: none; }
+    .file-info.visible { display: flex; }
+    .file-name { font-size: 12px; font-weight: 500; color: var(--success); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-clear { font-size: 12px; color: var(--text-hint); cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; background: none; }
+    .file-clear:hover { color: var(--danger); }
+    .req-preview { flex: 1; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+    .req-text { flex: 1; font-family: var(--mono); font-size: 11px; line-height: 1.7; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text-muted); resize: none; min-height: 0; }
+    .btn-generate { width: 100%; padding: 10px; font-family: var(--sans); font-size: 13px; font-weight: 500; border: none; border-radius: var(--radius); background: var(--accent); color: #fff; cursor: pointer; transition: opacity 0.15s; }
+    .btn-generate:hover { opacity: 0.88; }
+    .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Main */
+    .main { display: flex; flex-direction: column; height: 100vh; min-width: 0; }
+    .main-header { padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .main-title { font-size: 15px; font-weight: 500; }
+    .badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; background: var(--accent-light); color: var(--accent-text); font-weight: 500; border: 1px solid #b8d0e8; }
+    .main-body { flex: 1; display: grid; grid-template-rows: 1fr 1fr; min-height: 0; }
+    .preview-panel { border-bottom: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; position: relative; }
+    .panel-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg); flex-shrink: 0; }
+    .panel-title { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .btn-copy { padding: 4px 10px; font-size: 11px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text-muted); cursor: pointer; }
+    .btn-copy:hover { background: var(--bg); }
+    .preview-box { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--surface); }
+    .preview-box svg { max-width: 100%; max-height: 100%; }
+    .preview-placeholder { text-align: center; color: var(--text-hint); font-size: 13px; line-height: 2.4; }
+    .editor-panel { display: flex; flex-direction: column; min-height: 0; }
+    .mermaid-editor { flex: 1; font-family: var(--mono); font-size: 12px; line-height: 1.7; padding: 14px 16px; border: none; background: #1e1e1e; color: #d4d4d4; resize: none; min-height: 0; }
+    .mermaid-editor:focus { outline: none; }
+    .chat-section { border-top: 1px solid var(--border); padding: 12px 16px; background: var(--surface); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+    .chat-input { flex: 1; font-family: var(--sans); font-size: 13px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); resize: none; max-height: 100px; line-height: 1.5; }
+    .chat-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .chat-input::placeholder { color: var(--text-hint); }
+    .btn-send { padding: 9px 16px; font-family: var(--sans); font-size: 13px; font-weight: 500; border: 1px solid var(--accent); border-radius: var(--radius-lg); background: var(--accent-light); color: var(--accent-text); cursor: pointer; white-space: nowrap; }
+    .btn-send:hover { background: #d4e4f5; }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; z-index: 10; }
+    .loading-overlay.visible { display: flex; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--text-muted); }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: var(--radius-lg); font-size: 13px; font-weight: 500; color: #fff; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.visible { opacity: 1; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--accent); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="app-title">📋 シーケンス図ジェネレーター</div>
+      <div class="app-title-sub">要件定義書 → シーケンス図を自動生成</div>
+    </div>
+    <div class="upload-section">
+      <div class="section-label">要件定義書のアップロード</div>
+      <div class="upload-zone" id="upload-zone"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="handleDragOver(event)"
+           ondragleave="handleDragLeave(event)"
+           ondrop="handleDrop(event)">
+        <input type="file" id="file-input" accept=".txt" onchange="handleFileSelect(event)" />
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">クリックまたはドラッグ＆ドロップ</div>
+        <div class="upload-hint">.txt ファイルのみ対応</div>
+      </div>
+      <div class="file-info" id="file-info">
+        <span>📄</span>
+        <span class="file-name" id="file-name"></span>
+        <button class="file-clear" onclick="clearFile()">✕</button>
+      </div>
+      <button class="btn-generate" id="btn-generate" onclick="generateDiagram()" disabled>
+        ✨ シーケンス図を自動生成する
+      </button>
+    </div>
+    <div class="req-preview">
+      <div class="section-label">読み込んだ内容</div>
+      <textarea class="req-text" id="req-text" readonly placeholder="ファイルをアップロードすると内容がここに表示されます..."></textarea>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <span class="main-title">🔍 生成結果</span>
+      <span class="badge">Claude powered</span>
+    </header>
+    <div class="main-body">
+      <div class="preview-panel">
+        <div class="panel-header">
+          <span class="panel-title">📊 シーケンス図プレビュー</span>
+          <button class="btn-copy" onclick="copyCode()">コードをコピー</button>
+        </div>
+        <div class="preview-box" id="diagram-preview">
+          <div class="preview-placeholder">
+            ← 要件定義書（.txt）をアップロードして<br>
+            「シーケンス図を自動生成する」を押してください
+          </div>
+        </div>
+        <div class="loading-overlay" id="loading-overlay">
+          <div class="spinner"></div>
+          <div class="loading-text">Claudeが分析中...</div>
+        </div>
+      </div>
+      <div class="editor-panel">
+        <div class="panel-header" style="background:#1e1e1e; border-bottom-color:#333;">
+          <span class="panel-title" style="color:#888;">📝 Mermaidコード（編集可能）</span>
+          <button class="btn-copy" style="background:#2d2d2d;border-color:#555;color:#aaa;" onclick="reRender()">再レンダリング</button>
+        </div>
+        <textarea class="mermaid-editor" id="mermaid-editor"
+          placeholder="生成されたMermaidコードがここに表示されます。直接編集することもできます。"
+          spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div class="chat-section">
+      <textarea class="chat-input" id="chat-input" rows="1"
+        placeholder="追加の要望を入力... 例：「エラーハンドリングを追加して」「参加者名を英語にして」"
+        onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn-send" id="btn-send" onclick="sendChat()" disabled>修正依頼 ↗</button>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+
+  let requirementsText = '';
+  let currentCode = '';
+  let history = [];
+
+  function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' visible';
+    setTimeout(() => t.classList.remove('visible'), 3000);
+  }
+
+  function handleFileSelect(e) { if (e.target.files[0]) loadFile(e.target.files[0]); }
+  function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+  function handleDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.name.endsWith('.txt')) loadFile(f);
+    else showToast('.txtファイルのみ対応しています', 'error');
+  }
+
+  function loadFile(file) {
+    const r = new FileReader();
+    r.onload = (e) => {
+      requirementsText = e.target.result;
+      document.getElementById('req-text').value = requirementsText;
+      document.getElementById('file-name').textContent = file.name;
+      document.getElementById('file-info').classList.add('visible');
+      document.getElementById('btn-generate').disabled = false;
+      showToast('ファイルを読み込みました', 'success');
+    };
+    r.readAsText(file, 'UTF-8');
+  }
+
+  function clearFile() {
+    requirementsText = '';
+    document.getElementById('req-text').value = '';
+    document.getElementById('file-info').classList.remove('visible');
+    document.getElementById('file-input').value = '';
+    document.getElementById('btn-generate').disabled = true;
+  }
+
+  async function renderMermaid(code) {
+    const preview = document.getElementById('diagram-preview');
+    try {
+      const { svg } = await mermaid.render('mmd-' + Date.now(), code);
+      preview.innerHTML = svg;
+    } catch {
+      preview.innerHTML = '<div style="color:#c0392b;font-size:13px;text-align:center;">構文エラー: コードを確認してください</div>';
+    }
+  }
+
+  async function reRender() {
+    const code = document.getElementById('mermaid-editor').value.trim();
+    if (!code) return;
+    currentCode = code;
+    await renderMermaid(code);
+    showToast('再レンダリングしました', 'info');
+  }
+
+  function extractMermaid(text) {
+    const m = text.match(/```mermaid\n?([\s\S]*?)```/);
+    return m ? m[1].trim() : null;
+  }
+
+  function setLoading(v) {
+    document.getElementById('loading-overlay').classList.toggle('visible', v);
+    document.getElementById('btn-generate').disabled = v || !requirementsText;
+    document.getElementById('btn-send').disabled = v || !currentCode;
+  }
+
+  async function generateDiagram() {
+    if (!requirementsText) return;
+    setLoading(true);
+    history = [];
+    try {
+      const res = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requirements: requirementsText })
+      });
+      const data = await res.json();
+      if (data.error) { showToast(data.error, 'error'); return; }
+      const code = extractMermaid(data.reply);
+      if (code) {
+        currentCode = code;
+        document.getElementById('mermaid-editor').value = code;
+        await renderMermaid(code);
+        document.getElementById('btn-send').disabled = false;
+        history.push({ role: 'user', content: '要件定義書からシーケンス図を生成してください。' });
+        history.push({ role: 'assistant', content: data.reply });
+        showToast('シーケンス図を生成しました！', 'success');
+      } else {
+        showToast('コードが見つかりませんでした。もう一度お試しください。', 'error');
+      }
+    } catch (e) {
+      showToast('エラー: ' + e.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text || !currentCode) return;
+    input.value = '';
+    autoResize(input);
+    setLoading(true);
+    try {
+      const res = await fetch('/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_code: currentCode, request: text, history })
+      });
+      const data = await res.json();
+      if (data.error) { showToast(data.error, 'error'); return; }
+      const code = extractMermaid(data.reply);
+      if (code) {
+        currentCode = code;
+        document.getElementById('mermaid-editor').value = code;
+        await renderMermaid(code);
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: data.reply });
+        showToast('修正しました！', 'success');
+      } else {
+        showToast('修正後のコードが見つかりませんでした', 'error');
+      }
+    } catch (e) {
+      showToast('エラー: ' + e.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copyCode() {
+    if (!currentCode) { showToast('コードがまだ生成されていません', 'error'); return; }
+    navigator.clipboard.writeText(currentCode).then(() => showToast('コードをコピーしました', 'success'));
+  }
+
+  function handleChatKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+  }
+</script>
+</body>
+</html>
