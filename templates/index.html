@@ -127,7 +127,7 @@
     .tab-pane.active { display:flex; }
 
     /* ── 曖昧性検出タブ ── */
-    .amb-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .amb-body { flex:1; min-height:0; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
     .empty-st { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--t2); text-align:center; padding:32px; }
     .empty-icon { width:44px; height:44px; border-radius:var(--rl); background:var(--elevated); border:1px solid var(--b0); display:flex; align-items:center; justify-content:center; margin-bottom:4px; }
     .empty-icon svg { width:20px; height:20px; color:var(--t2); }
@@ -147,7 +147,7 @@
     .enhanced-hdr-l svg { width:13px; height:13px; color:var(--purple); }
     .enhanced-title { font-size:12px; font-weight:600; color:var(--purple); }
     .enhanced-body { padding:15px; }
-    .enhanced-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; }
+    .enhanced-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; max-height:400px; overflow-y:auto; }
 
     .improved-card { background:var(--panel); border:1px solid var(--green-b); border-radius:var(--rl); overflow:hidden; animation:fadeUp 0.3s 0.1s ease both; }
     .improved-hdr { padding:11px 15px; border-bottom:1px solid var(--green-b); display:flex; align-items:center; justify-content:space-between; background:var(--green-d); }
@@ -155,7 +155,7 @@
     .improved-hdr-l svg { width:13px; height:13px; color:var(--green); }
     .improved-title { font-size:12px; font-weight:600; color:var(--green); }
     .improved-body { padding:15px; }
-    .improved-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; }
+    .improved-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; max-height:400px; overflow-y:auto; }
 
     .btn-use { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; border-radius:var(--r); border:none; font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; transition:opacity var(--tr); }
     .btn-use svg { width:12px; height:12px; }
@@ -202,7 +202,7 @@
     .btn-send:disabled { opacity:0.35; cursor:not-allowed; }
 
     /* PR タブ */
-    .pr-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .pr-body { flex:1; min-height:0; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
     .pr-form { background:var(--panel); border:1px solid var(--b0); border-radius:var(--rl); overflow:hidden; }
     .pr-form-hdr { padding:11px 15px; border-bottom:1px solid var(--b0); background:var(--elevated); }
     .pr-form-title { font-size:12px; font-weight:600; color:var(--t1); }
