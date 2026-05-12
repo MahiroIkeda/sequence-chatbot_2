@@ -82,7 +82,7 @@ http://localhost:5000
 sequence-chatbot_2/
 ├── README.md               # 本ファイル（プロジェクト概要）
 ├── app.py                  # Flaskサーバー・GitHub API連携
-├── .env                    # APIキー（GitHubには公開しない）
+├── .env                    # APIキー
 ├── .gitignore
 ├── templates/
 │   └── index.html          # フロントエンド（全機能）
