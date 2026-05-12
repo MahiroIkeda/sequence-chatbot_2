@@ -287,7 +287,7 @@ def detect_ambiguity():
     )
     return jsonify({
         "report": reply,
-        "enhanced": extract_section(reply, "## 補完済み要件定義書"),
+        "enhanced": extract_section(reply, "### 補完済み要件定義書"),
     })
 
 
