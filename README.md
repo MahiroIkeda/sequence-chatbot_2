@@ -1,6 +1,5 @@
 # SpecFlow — 仕様駆動開発アシスタント
 
-信州大学 池田眞浩（2025）が研究・開発したツール。  
 要件定義書からシーケンス図を自動生成し、GitHubと連携して仕様とコードを同期管理する。
 
 > 仕様駆動開発の理論的背景・原則・7工程との対応については → [docs/SPEC_DRIVEN.md](docs/SPEC_DRIVEN.md)
@@ -51,13 +50,10 @@ pip install flask anthropic python-dotenv
 ### 2. APIキーの設定
 
 `.env` ファイルをプロジェクトルートに作成し、以下を記述する。
-
-```
 ANTHROPIC_API_KEY=sk-ant-ここにAPIキーを貼り付ける
 GITHUB_TOKEN=ghp_ここにGitHubトークンを貼り付ける
 GITHUB_OWNER=GitHubユーザー名
 GITHUB_REPO=リポジトリ名
-```
 
 ### 3. サーバーの起動
 
@@ -66,10 +62,7 @@ python app.py
 ```
 
 ### 4. ブラウザでアクセス
-
-```
 http://localhost:5000
-```
 
 ---
 
@@ -86,8 +79,6 @@ http://localhost:5000
 ---
 
 ## ファイル構成
-
-```
 sequence-chatbot_2/
 ├── README.md               # 本ファイル（プロジェクト概要）
 ├── app.py                  # Flaskサーバー・GitHub API連携
@@ -96,10 +87,9 @@ sequence-chatbot_2/
 ├── templates/
 │   └── index.html          # フロントエンド（全機能）
 └── docs/
-    ├── SPEC_DRIVEN.md      # 仕様駆動開発の解説・本ツールとの対応
-    ├── specification.md    # 仕様書（SpecFlowが自動更新）
-    └── sequence.md         # シーケンス図（SpecFlowが自動更新）
-```
+├── SPEC_DRIVEN.md      # 仕様駆動開発の解説・本ツールとの対応
+├── specification.md    # 仕様書（SpecFlowが自動更新）
+└── sequence.md         # シーケンス図（SpecFlowが自動更新）
 
 ---
 
