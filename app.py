@@ -122,9 +122,15 @@ def call_claude(user_message, system_prompt=None, history=None, max_tokens=2000)
 
 
 def extract_section(text, heading):
-    """レスポンステキストから特定の見出し以降のテキストを抽出する"""
-    if heading in text:
-        return text.split(heading)[-1].strip()
+    """レスポンステキストから特定の見出し以降のテキストを抽出する。
+    見出しレベル（#, ##, ###）や太字（**）に依存せずキーワードで検索する。
+    """
+    keyword = heading.lstrip('#').strip().lstrip('*').rstrip('*').strip()
+    lines = text.split('\n')
+    for i, line in enumerate(lines):
+        stripped = line.strip().lstrip('#').strip().lstrip('*').rstrip('*').strip()
+        if stripped == keyword or keyword in stripped:
+            return '\n'.join(lines[i+1:]).strip()
     return ""
 
 

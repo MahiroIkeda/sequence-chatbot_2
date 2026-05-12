@@ -127,7 +127,7 @@
     .tab-pane.active { display:flex; }
 
     /* ── 曖昧性検出タブ ── */
-    .amb-body { flex:1; min-height:0; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .amb-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
     .empty-st { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--t2); text-align:center; padding:32px; }
     .empty-icon { width:44px; height:44px; border-radius:var(--rl); background:var(--elevated); border:1px solid var(--b0); display:flex; align-items:center; justify-content:center; margin-bottom:4px; }
     .empty-icon svg { width:20px; height:20px; color:var(--t2); }
@@ -147,7 +147,7 @@
     .enhanced-hdr-l svg { width:13px; height:13px; color:var(--purple); }
     .enhanced-title { font-size:12px; font-weight:600; color:var(--purple); }
     .enhanced-body { padding:15px; }
-    .enhanced-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; max-height:400px; overflow-y:auto; }
+    .enhanced-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; }
 
     .improved-card { background:var(--panel); border:1px solid var(--green-b); border-radius:var(--rl); overflow:hidden; animation:fadeUp 0.3s 0.1s ease both; }
     .improved-hdr { padding:11px 15px; border-bottom:1px solid var(--green-b); display:flex; align-items:center; justify-content:space-between; background:var(--green-d); }
@@ -155,7 +155,7 @@
     .improved-hdr-l svg { width:13px; height:13px; color:var(--green); }
     .improved-title { font-size:12px; font-weight:600; color:var(--green); }
     .improved-body { padding:15px; }
-    .improved-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; max-height:400px; overflow-y:auto; }
+    .improved-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; }
 
     .btn-use { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; border-radius:var(--r); border:none; font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; transition:opacity var(--tr); }
     .btn-use svg { width:12px; height:12px; }
@@ -163,6 +163,13 @@
     .btn-use-green:hover { opacity:0.88; }
     .btn-use-purple { background:var(--purple); color:#fff; }
     .btn-use-purple:hover { opacity:0.88; }
+    .btn-use-gray { background:var(--elevated); color:var(--t1); border:1px solid var(--b1); }
+    .btn-use-gray:hover { background:var(--hover); color:var(--t0); }
+
+    .approval-bar { display:flex; align-items:center; gap:10px; padding:12px 15px; border-top:1px solid var(--b0); background:var(--elevated); }
+    .approval-bar-label { font-size:12px; color:var(--t1); flex:1; }
+    .approved-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:var(--r); background:var(--green-d); border:1px solid var(--green-b); font-size:12px; color:var(--green); font-weight:500; }
+    .approved-badge svg { width:12px; height:12px; }
 
     /* diff バナー */
     .diff-banner { margin:0 20px; padding:12px 16px; border-radius:var(--r); display:none; align-items:flex-start; gap:10px; }
@@ -202,7 +209,7 @@
     .btn-send:disabled { opacity:0.35; cursor:not-allowed; }
 
     /* PR タブ */
-    .pr-body { flex:1; min-height:0; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .pr-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
     .pr-form { background:var(--panel); border:1px solid var(--b0); border-radius:var(--rl); overflow:hidden; }
     .pr-form-hdr { padding:11px 15px; border-bottom:1px solid var(--b0); background:var(--elevated); }
     .pr-form-title { font-size:12px; font-weight:600; color:var(--t1); }
@@ -584,22 +591,65 @@ async function detectAmbiguity(){
 function renderAmbReport(report, enhanced){
   document.getElementById('amb-empty').style.display='none';
   const c=document.getElementById('amb-result'); c.innerHTML='';
+  // 「補完済み要件定義書」キーワードを含む見出し行で分割（##/###/####や太字に対応）
+  const m = report.match(/^[#*\s]*補完済み要件定義書[*\s]*$/m);
+  const reportBody = m ? report.substring(0, report.indexOf(m[0])) : report;
   const card=document.createElement('div'); card.className='result-card';
-  card.innerHTML=`<div class="card-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="card-hdr-title">曖昧性検出レポート</span></div><div class="card-body">${esc(report.split('### 補完済み要件定義書')[0])}</div>`;
+  card.innerHTML=`<div class="card-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="card-hdr-title">曖昧性検出レポート</span></div><div class="card-body">${esc(reportBody)}</div>`;
   c.appendChild(card);
   if(enhanced){
     const ec=document.createElement('div'); ec.className='enhanced-card';
-    ec.innerHTML=`<div class="enhanced-hdr"><div class="enhanced-hdr-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span class="enhanced-title">形式的定義による補完済み要件書</span></div><button class="btn-use btn-use-purple" onclick="useEnhanced()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>この補完済み要件でシーケンス図を生成</button></div><div class="enhanced-body"><pre class="enhanced-pre">${esc(enhanced)}</pre></div>`;
+    ec.innerHTML=`
+      <div class="enhanced-hdr">
+        <div class="enhanced-hdr-l">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="enhanced-title">形式的定義による補完済み要件書</span>
+        </div>
+      </div>
+      <div class="enhanced-body"><pre class="enhanced-pre">${esc(enhanced)}</pre></div>
+      <div class="approval-bar" id="approval-bar">
+        <span class="approval-bar-label">この補完内容でよければ承認してください。承認後にシーケンス図を生成できます。</span>
+        <button class="btn-use btn-use-gray" onclick="redetectAmbiguity()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          修正して再生成
+        </button>
+        <button class="btn-use btn-use-green" onclick="approveEnhanced()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          この内容で承認する
+        </button>
+      </div>`;
     c.appendChild(ec);
   }
 }
 
-function useEnhanced(){
+function approveEnhanced(){
   if(!enhancedSpec) return;
   reqText=enhancedSpec;
   document.getElementById('req-text').value=enhancedSpec;
-  toast('補完済み要件定義書を適用しました','success');
-  generateDiagram();
+  // 承認バーをバッジに切り替え
+  const bar=document.getElementById('approval-bar');
+  bar.innerHTML=`
+    <span class="approved-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      承認済み — 補完済み要件を適用しました
+    </span>
+    <button class="btn-use btn-use-green" onclick="generateDiagram()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      シーケンス図を生成
+    </button>`;
+  // サイドバーのシーケンス図ボタンも有効化
+  document.getElementById('btn-gen').disabled=false;
+  toast('補完済み要件を承認しました。シーケンス図を生成できます。','success');
+}
+
+function redetectAmbiguity(){
+  toast('再度「曖昧性を自動検出」を実行してください','info');
+  document.getElementById('btn-amb').disabled=false;
+}
+
+function useEnhanced(){
+  // 後方互換のため残す
+  approveEnhanced();
 }
 
 // ── 仕様レビュー ──
