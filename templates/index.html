@@ -3,316 +3,798 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>シーケンス図ジェネレーター</title>
+  <title>SpecFlow — 仕様駆動開発アシスタント</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #f8f7f4; --surface: #fff; --border: #e2e0da; --border-strong: #c8c5bc;
-      --text: #1a1917; --text-muted: #6b6860; --text-hint: #a8a59e;
-      --accent: #2d5a8e; --accent-light: #e8f0f8; --accent-text: #1a3d63;
-      --danger: #c0392b; --danger-light: #fdf0ee;
-      --success: #1a6b3a; --success-light: #edf7f1;
-      --warning-light: #fef9ec; --warning-text: #7a5c00; --warning-border: #e8c84a;
-      --mono: 'IBM Plex Mono', monospace; --sans: 'Noto Sans JP', sans-serif;
-      --radius: 8px; --radius-lg: 12px;
+      --bg:       #0d0f12;
+      --panel:    #13161b;
+      --elevated: #1a1e26;
+      --hover:    #1f2430;
+      --b0: rgba(255,255,255,0.05);
+      --b1: rgba(255,255,255,0.09);
+      --b2: rgba(255,255,255,0.16);
+      --t0: #f0f2f5;
+      --t1: #8b92a5;
+      --t2: #4e5568;
+      --green:  #10b981;
+      --green-d: rgba(16,185,129,0.12);
+      --green-b: rgba(16,185,129,0.28);
+      --blue:   #3b82f6;
+      --blue-d: rgba(59,130,246,0.12);
+      --blue-b: rgba(59,130,246,0.28);
+      --amber:  #f59e0b;
+      --amber-d:rgba(245,158,11,0.12);
+      --amber-b:rgba(245,158,11,0.28);
+      --purple: #8b5cf6;
+      --purple-d:rgba(139,92,246,0.12);
+      --purple-b:rgba(139,92,246,0.28);
+      --red:    #ef4444;
+      --red-d:  rgba(239,68,68,0.10);
+      --sans: 'DM Sans','Noto Sans JP',sans-serif;
+      --mono: 'DM Mono',monospace;
+      --r: 8px; --rl: 12px;
+      --tr: 180ms ease;
     }
-    html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
-    .layout { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+    html,body { height:100%; font-family:var(--sans); background:var(--bg); color:var(--t0); font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased; }
 
-    /* Sidebar */
-    .sidebar { display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--border); overflow: hidden; }
-    .sidebar-top { padding: 16px; border-bottom: 1px solid var(--border); }
-    .app-title { font-size: 15px; font-weight: 500; }
-    .app-title-sub { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
-    .upload-section { padding: 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
-    .section-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .upload-zone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); padding: 20px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--bg); }
-    .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: var(--accent-light); }
-    .upload-zone input { display: none; }
-    .upload-icon { font-size: 26px; margin-bottom: 6px; }
-    .upload-text { font-size: 13px; color: var(--text-muted); }
-    .upload-hint { font-size: 11px; color: var(--text-hint); margin-top: 4px; }
-    .file-info { background: var(--success-light); border: 1px solid #a8d5b8; border-radius: var(--radius); padding: 9px 12px; align-items: center; gap: 8px; display: none; }
-    .file-info.visible { display: flex; }
-    .file-name { font-size: 12px; font-weight: 500; color: var(--success); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-clear { font-size: 12px; color: var(--text-hint); cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; background: none; }
-    .file-clear:hover { color: var(--danger); }
-    .req-preview { flex: 1; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-    .req-text { flex: 1; font-family: var(--mono); font-size: 11px; line-height: 1.7; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text-muted); resize: none; min-height: 0; }
-    .btn-generate { width: 100%; padding: 10px; font-family: var(--sans); font-size: 13px; font-weight: 500; border: none; border-radius: var(--radius); background: var(--accent); color: #fff; cursor: pointer; transition: opacity 0.15s; }
-    .btn-generate:hover { opacity: 0.88; }
-    .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+    .app { display:grid; grid-template-columns:296px 1fr; height:100vh; overflow:hidden; }
 
-    /* Main */
-    .main { display: flex; flex-direction: column; height: 100vh; min-width: 0; }
-    .main-header { padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .main-title { font-size: 15px; font-weight: 500; }
-    .badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; background: var(--accent-light); color: var(--accent-text); font-weight: 500; border: 1px solid #b8d0e8; }
-    .main-body { flex: 1; display: grid; grid-template-rows: 1fr 1fr; min-height: 0; }
-    .preview-panel { border-bottom: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; position: relative; }
-    .panel-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg); flex-shrink: 0; }
-    .panel-title { font-size: 12px; font-weight: 500; color: var(--text-muted); }
-    .btn-copy { padding: 4px 10px; font-size: 11px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text-muted); cursor: pointer; }
-    .btn-copy:hover { background: var(--bg); }
-    .preview-box { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--surface); }
-    .preview-box svg { max-width: 100%; max-height: 100%; }
-    .preview-placeholder { text-align: center; color: var(--text-hint); font-size: 13px; line-height: 2.4; }
-    .editor-panel { display: flex; flex-direction: column; min-height: 0; }
-    .mermaid-editor { flex: 1; font-family: var(--mono); font-size: 12px; line-height: 1.7; padding: 14px 16px; border: none; background: #1e1e1e; color: #d4d4d4; resize: none; min-height: 0; }
-    .mermaid-editor:focus { outline: none; }
-    .chat-section { border-top: 1px solid var(--border); padding: 12px 16px; background: var(--surface); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
-    .chat-input { flex: 1; font-family: var(--sans); font-size: 13px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); resize: none; max-height: 100px; line-height: 1.5; }
-    .chat-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-    .chat-input::placeholder { color: var(--text-hint); }
-    .btn-send { padding: 9px 16px; font-family: var(--sans); font-size: 13px; font-weight: 500; border: 1px solid var(--accent); border-radius: var(--radius-lg); background: var(--accent-light); color: var(--accent-text); cursor: pointer; white-space: nowrap; }
-    .btn-send:hover { background: #d4e4f5; }
-    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
-    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; z-index: 10; }
-    .loading-overlay.visible { display: flex; }
-    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { font-size: 13px; color: var(--text-muted); }
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: var(--radius-lg); font-size: 13px; font-weight: 500; color: #fff; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-    .toast.visible { opacity: 1; }
-    .toast.success { background: var(--success); }
-    .toast.error { background: var(--danger); }
-    .toast.info { background: var(--accent); }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+    /* ── SIDEBAR ── */
+    .sidebar { display:flex; flex-direction:column; background:var(--panel); border-right:1px solid var(--b0); overflow:hidden; }
+
+    .sidebar-header { padding:20px 20px 16px; border-bottom:1px solid var(--b0); flex-shrink:0; }
+    .logo { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+    .logo-mark { width:28px; height:28px; border-radius:var(--r); background:linear-gradient(135deg,var(--green),#059669); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .logo-mark svg { width:16px; height:16px; color:#fff; }
+    .logo-name { font-size:15px; font-weight:600; letter-spacing:-0.3px; }
+    .logo-sub { font-size:11px; color:var(--t2); margin-left:38px; }
+
+    .sb-section { padding:14px 20px; border-bottom:1px solid var(--b0); flex-shrink:0; display:flex; flex-direction:column; gap:10px; }
+    .sb-label { font-size:10px; font-weight:600; color:var(--t2); letter-spacing:0.08em; text-transform:uppercase; }
+
+    .upload-zone { border:1.5px dashed var(--b1); border-radius:var(--rl); padding:16px 12px; text-align:center; cursor:pointer; transition:all var(--tr); background:var(--elevated); position:relative; }
+    .upload-zone:hover,.upload-zone.drag { border-color:var(--green-b); background:var(--green-d); }
+    .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-icon { width:34px; height:34px; border-radius:var(--r); background:var(--hover); border:1px solid var(--b1); display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+    .upload-icon svg { width:17px; height:17px; color:var(--t1); }
+    .upload-label { font-size:12px; color:var(--t1); font-weight:500; }
+    .upload-hint { font-size:11px; color:var(--t2); margin-top:2px; }
+
+    .file-chip { display:none; align-items:center; gap:8px; background:var(--green-d); border:1px solid var(--green-b); border-radius:var(--r); padding:8px 10px; }
+    .file-chip.on { display:flex; }
+    .file-chip svg { width:16px; height:16px; color:var(--green); flex-shrink:0; }
+    .file-chip-name { font-size:12px; color:var(--green); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
+    .fc-rm { background:none; border:none; cursor:pointer; color:var(--t2); display:flex; padding:2px; border-radius:3px; }
+    .fc-rm:hover { color:var(--red); }
+    .fc-rm svg { width:13px; height:13px; }
+
+    .btn-grp { display:flex; flex-direction:column; gap:7px; }
+    .btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:9px 14px; border-radius:var(--r); font-family:var(--sans); font-size:13px; font-weight:500; cursor:pointer; transition:all var(--tr); border:none; }
+    .btn svg { width:14px; height:14px; flex-shrink:0; }
+    .btn:disabled { opacity:0.35; cursor:not-allowed; }
+    .btn-green { background:var(--green); color:#fff; }
+    .btn-green:not(:disabled):hover { background:#0ea572; }
+    .btn-outline { background:transparent; color:var(--t1); border:1px solid var(--b1); }
+    .btn-outline:not(:disabled):hover { background:var(--hover); color:var(--t0); border-color:var(--b2); }
+    .btn-blue { background:transparent; color:var(--t1); border:1px solid var(--b1); }
+    .btn-blue:not(:disabled):hover { background:var(--blue-d); color:#93c5fd; border-color:var(--blue-b); }
+    .btn-amber { background:transparent; color:var(--t1); border:1px solid var(--b1); }
+    .btn-amber:not(:disabled):hover { background:var(--amber-d); color:#fcd34d; border-color:var(--amber-b); }
+    .btn-purple { background:transparent; color:var(--t1); border:1px solid var(--b1); }
+    .btn-purple:not(:disabled):hover { background:var(--purple-d); color:#c4b5fd; border-color:var(--purple-b); }
+
+    .spec-prev { flex:1; padding:0 20px 20px; display:flex; flex-direction:column; gap:7px; min-height:0; overflow:hidden; }
+    .spec-ta { flex:1; font-family:var(--mono); font-size:11px; line-height:1.75; padding:10px; border:1px solid var(--b0); border-radius:var(--r); background:var(--bg); color:var(--t1); resize:none; min-height:0; }
+    .spec-ta:focus { outline:none; border-color:var(--b1); }
+
+    /* ── MAIN ── */
+    .main { display:flex; flex-direction:column; height:100vh; min-width:0; overflow:hidden; }
+
+    .topbar { display:flex; align-items:center; border-bottom:1px solid var(--b0); background:var(--panel); flex-shrink:0; }
+    .pipeline { display:flex; align-items:center; gap:0; padding:0 12px; flex:1; overflow-x:auto; scrollbar-width:none; }
+    .pipeline::-webkit-scrollbar { display:none; }
+    .pip { display:flex; align-items:center; gap:6px; padding:13px 10px; font-size:12px; font-weight:500; color:var(--t2); white-space:nowrap; border-bottom:2px solid transparent; transition:all var(--tr); }
+    .pip .num { width:17px; height:17px; border-radius:50%; background:var(--elevated); border:1px solid var(--b1); font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:600; flex-shrink:0; transition:all var(--tr); }
+    .pip.active { color:var(--t0); border-bottom-color:var(--green); }
+    .pip.active .num { background:var(--green-d); border-color:var(--green-b); color:var(--green); }
+    .pip.done { color:var(--green); }
+    .pip.done .num { background:var(--green); border-color:var(--green); color:#fff; }
+    .pip-arr { color:var(--t2); font-size:11px; padding:0 1px; flex-shrink:0; }
+
+    .topbar-right { padding:0 14px; display:flex; gap:8px; flex-shrink:0; }
+    .btn-sm { display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--r); border:1px solid var(--b1); background:transparent; color:var(--t1); font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; transition:all var(--tr); white-space:nowrap; }
+    .btn-sm svg { width:13px; height:13px; }
+    .btn-sm:not(:disabled):hover { background:var(--hover); color:var(--t0); border-color:var(--b2); }
+    .btn-sm:disabled { opacity:0.35; cursor:not-allowed; }
+    .btn-sm.blue:not(:disabled):hover { background:var(--blue-d); color:#93c5fd; border-color:var(--blue-b); }
+    .btn-sm.purple:not(:disabled):hover { background:var(--purple-d); color:#c4b5fd; border-color:var(--purple-b); }
+    .btn-sm.amber:not(:disabled):hover { background:var(--amber-d); color:#fcd34d; border-color:var(--amber-b); }
+
+    .tab-nav { display:flex; border-bottom:1px solid var(--b0); background:var(--panel); flex-shrink:0; padding:0 4px; overflow-x:auto; scrollbar-width:none; }
+    .tab-nav::-webkit-scrollbar { display:none; }
+    .tab-btn { display:flex; align-items:center; gap:6px; padding:10px 14px; font-size:13px; font-weight:500; color:var(--t2); cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; transition:all var(--tr); white-space:nowrap; }
+    .tab-btn svg { width:13px; height:13px; }
+    .tab-btn:hover { color:var(--t1); }
+    .tab-btn.active { color:var(--t0); border-bottom-color:var(--green); }
+    .sdot { width:6px; height:6px; border-radius:50%; background:var(--elevated); border:1px solid var(--b1); transition:all var(--tr); }
+    .sdot.done { background:var(--green); border-color:var(--green); }
+
+    .tab-pane { display:none; flex:1; min-height:0; overflow:hidden; flex-direction:column; }
+    .tab-pane.active { display:flex; }
+
+    /* ── 曖昧性検出タブ ── */
+    .amb-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .empty-st { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--t2); text-align:center; padding:32px; }
+    .empty-icon { width:44px; height:44px; border-radius:var(--rl); background:var(--elevated); border:1px solid var(--b0); display:flex; align-items:center; justify-content:center; margin-bottom:4px; }
+    .empty-icon svg { width:20px; height:20px; color:var(--t2); }
+    .empty-st h3 { font-size:14px; font-weight:500; color:var(--t1); }
+    .empty-st p { font-size:12px; line-height:1.8; max-width:260px; }
+
+    .result-card { background:var(--panel); border:1px solid var(--b0); border-radius:var(--rl); overflow:hidden; animation:fadeUp 0.25s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .card-hdr { padding:11px 15px; border-bottom:1px solid var(--b0); display:flex; align-items:center; gap:7px; background:var(--elevated); }
+    .card-hdr svg { width:13px; height:13px; color:var(--t2); flex-shrink:0; }
+    .card-hdr-title { font-size:12px; font-weight:600; color:var(--t1); letter-spacing:0.02em; }
+    .card-body { padding:15px; font-size:13px; line-height:1.85; color:var(--t1); white-space:pre-wrap; }
+
+    .enhanced-card { background:var(--panel); border:1px solid var(--purple-b); border-radius:var(--rl); overflow:hidden; animation:fadeUp 0.3s 0.1s ease both; }
+    .enhanced-hdr { padding:11px 15px; border-bottom:1px solid var(--purple-b); display:flex; align-items:center; justify-content:space-between; background:var(--purple-d); }
+    .enhanced-hdr-l { display:flex; align-items:center; gap:7px; }
+    .enhanced-hdr-l svg { width:13px; height:13px; color:var(--purple); }
+    .enhanced-title { font-size:12px; font-weight:600; color:var(--purple); }
+    .enhanced-body { padding:15px; }
+    .enhanced-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; }
+
+    .improved-card { background:var(--panel); border:1px solid var(--green-b); border-radius:var(--rl); overflow:hidden; animation:fadeUp 0.3s 0.1s ease both; }
+    .improved-hdr { padding:11px 15px; border-bottom:1px solid var(--green-b); display:flex; align-items:center; justify-content:space-between; background:var(--green-d); }
+    .improved-hdr-l { display:flex; align-items:center; gap:7px; }
+    .improved-hdr-l svg { width:13px; height:13px; color:var(--green); }
+    .improved-title { font-size:12px; font-weight:600; color:var(--green); }
+    .improved-body { padding:15px; }
+    .improved-pre { font-family:var(--mono); font-size:12px; line-height:1.75; color:var(--t1); white-space:pre-wrap; }
+
+    .btn-use { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; border-radius:var(--r); border:none; font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; transition:opacity var(--tr); }
+    .btn-use svg { width:12px; height:12px; }
+    .btn-use-green { background:var(--green); color:#fff; }
+    .btn-use-green:hover { opacity:0.88; }
+    .btn-use-purple { background:var(--purple); color:#fff; }
+    .btn-use-purple:hover { opacity:0.88; }
+
+    /* diff バナー */
+    .diff-banner { margin:0 20px; padding:12px 16px; border-radius:var(--r); display:none; align-items:flex-start; gap:10px; }
+    .diff-banner.visible { display:flex; }
+    .diff-banner.changed { background:var(--amber-d); border:1px solid var(--amber-b); }
+    .diff-banner.same { background:var(--green-d); border:1px solid var(--green-b); }
+    .diff-banner svg { width:15px; height:15px; flex-shrink:0; margin-top:1px; }
+    .diff-banner.changed svg { color:var(--amber); }
+    .diff-banner.same svg { color:var(--green); }
+    .diff-banner-text { font-size:13px; color:var(--t1); flex:1; }
+    .diff-detail { margin-top:6px; font-size:12px; color:var(--t1); white-space:pre-wrap; line-height:1.7; }
+
+    /* ── シーケンス図タブ ── */
+    .diag-pane { flex:1; display:grid; grid-template-rows:1fr 200px; min-height:0; }
+    .prev-area { display:flex; flex-direction:column; min-height:0; position:relative; border-bottom:1px solid var(--b0); }
+    .area-hdr { padding:9px 14px; border-bottom:1px solid var(--b0); display:flex; align-items:center; justify-content:space-between; background:var(--panel); flex-shrink:0; }
+    .area-hdr-title { font-size:11px; font-weight:600; color:var(--t2); letter-spacing:0.06em; text-transform:uppercase; }
+    .mini-btn { display:flex; align-items:center; gap:4px; padding:5px 9px; border-radius:4px; border:1px solid var(--b1); background:transparent; font-family:var(--sans); font-size:11px; font-weight:500; color:var(--t2); cursor:pointer; transition:all var(--tr); }
+    .mini-btn svg { width:12px; height:12px; }
+    .mini-btn:hover { background:var(--hover); color:var(--t0); border-color:var(--b2); }
+    .prev-canvas { flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:20px; background:var(--bg); }
+    .prev-canvas svg { max-width:100%; max-height:100%; }
+
+    .code-area { display:flex; flex-direction:column; min-height:0; background:#0a0c0f; }
+    .code-hdr { padding:7px 14px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .code-lang { font-size:11px; color:rgba(255,255,255,0.22); font-family:var(--mono); }
+    .code-editor { flex:1; font-family:var(--mono); font-size:12px; line-height:1.75; padding:11px 14px; border:none; background:transparent; color:#a8b5c8; resize:none; min-height:0; }
+    .code-editor:focus { outline:none; }
+
+    .chat-bar { border-top:1px solid var(--b0); padding:11px 14px; background:var(--panel); display:flex; gap:9px; align-items:flex-end; flex-shrink:0; }
+    .chat-ta { flex:1; font-family:var(--sans); font-size:13px; padding:8px 12px; border:1px solid var(--b1); border-radius:var(--r); background:var(--elevated); color:var(--t0); resize:none; max-height:100px; line-height:1.5; transition:border-color var(--tr); }
+    .chat-ta:focus { outline:none; border-color:var(--b2); }
+    .chat-ta::placeholder { color:var(--t2); }
+    .btn-send { display:flex; align-items:center; justify-content:center; padding:9px 14px; border-radius:var(--r); background:var(--elevated); border:1px solid var(--b1); color:var(--t1); cursor:pointer; font-family:var(--sans); font-size:13px; font-weight:500; gap:5px; white-space:nowrap; transition:all var(--tr); }
+    .btn-send svg { width:13px; height:13px; }
+    .btn-send:not(:disabled):hover { background:var(--hover); color:var(--t0); border-color:var(--b2); }
+    .btn-send:disabled { opacity:0.35; cursor:not-allowed; }
+
+    /* PR タブ */
+    .pr-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .pr-form { background:var(--panel); border:1px solid var(--b0); border-radius:var(--rl); overflow:hidden; }
+    .pr-form-hdr { padding:11px 15px; border-bottom:1px solid var(--b0); background:var(--elevated); }
+    .pr-form-title { font-size:12px; font-weight:600; color:var(--t1); }
+    .pr-form-body { padding:16px; display:flex; flex-direction:column; gap:12px; }
+    .field-label { font-size:11px; font-weight:600; color:var(--t2); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px; display:block; }
+    .field-input { width:100%; padding:8px 11px; font-family:var(--sans); font-size:13px; border:1px solid var(--b1); border-radius:var(--r); background:var(--elevated); color:var(--t0); transition:border-color var(--tr); }
+    .field-input:focus { outline:none; border-color:var(--b2); }
+    .field-textarea { width:100%; padding:8px 11px; font-family:var(--sans); font-size:13px; border:1px solid var(--b1); border-radius:var(--r); background:var(--elevated); color:var(--t0); resize:none; min-height:80px; line-height:1.5; transition:border-color var(--tr); }
+    .field-textarea:focus { outline:none; border-color:var(--b2); }
+    .pr-result { background:var(--blue-d); border:1px solid var(--blue-b); border-radius:var(--rl); padding:16px; display:none; animation:fadeUp 0.2s ease; }
+    .pr-result.visible { display:block; }
+    .pr-result-title { font-size:13px; font-weight:600; color:#93c5fd; margin-bottom:8px; }
+    .pr-result-link { font-size:13px; color:#93c5fd; text-decoration:underline; word-break:break-all; }
+    .pr-info-text { font-size:12px; color:var(--t1); margin-top:6px; line-height:1.7; }
+
+    /* ローディング */
+    .loading-mask { position:absolute; inset:0; background:rgba(13,15,18,0.75); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:20; }
+    .loading-mask.on { display:flex; }
+    .spinner { width:22px; height:22px; border:2px solid var(--b1); border-top-color:var(--green); border-radius:50%; animation:spin 0.7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .spin-label { font-size:12px; color:var(--t1); font-weight:500; }
+
+    /* トースト */
+    .toast-wrap { position:fixed; bottom:18px; right:18px; z-index:999; display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+    .toast { display:flex; align-items:center; gap:7px; padding:9px 14px; border-radius:var(--r); font-size:13px; font-weight:500; color:var(--t0); background:var(--elevated); border:1px solid var(--b1); box-shadow:0 8px 24px rgba(0,0,0,0.4); animation:toastIn 0.2s ease; pointer-events:auto; }
+    .toast svg { width:14px; height:14px; flex-shrink:0; }
+    .toast.success { border-color:var(--green-b); }
+    .toast.success svg { color:var(--green); }
+    .toast.error { border-color:rgba(239,68,68,0.3); }
+    .toast.error svg { color:var(--red); }
+    .toast.info svg { color:var(--blue); }
+    .toast.warn svg { color:var(--amber); }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-thumb { background:var(--b1); border-radius:3px; }
   </style>
 </head>
 <body>
-<div class="layout">
+<div class="app">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-top">
-      <div class="app-title">📋 シーケンス図ジェネレーター</div>
-      <div class="app-title-sub">要件定義書 → シーケンス図を自動生成</div>
-    </div>
-    <div class="upload-section">
-      <div class="section-label">要件定義書のアップロード</div>
-      <div class="upload-zone" id="upload-zone"
-           onclick="document.getElementById('file-input').click()"
-           ondragover="handleDragOver(event)"
-           ondragleave="handleDragLeave(event)"
-           ondrop="handleDrop(event)">
-        <input type="file" id="file-input" accept=".txt" onchange="handleFileSelect(event)" />
-        <div class="upload-icon">📄</div>
-        <div class="upload-text">クリックまたはドラッグ＆ドロップ</div>
-        <div class="upload-hint">.txt ファイルのみ対応</div>
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="logo-name">SpecFlow</span>
       </div>
-      <div class="file-info" id="file-info">
-        <span>📄</span>
-        <span class="file-name" id="file-name"></span>
-        <button class="file-clear" onclick="clearFile()">✕</button>
-      </div>
-      <button class="btn-generate" id="btn-generate" onclick="generateDiagram()" disabled>
-        ✨ シーケンス図を自動生成する
-      </button>
+      <div class="logo-sub">仕様駆動開発アシスタント</div>
     </div>
-    <div class="req-preview">
-      <div class="section-label">読み込んだ内容</div>
-      <textarea class="req-text" id="req-text" readonly placeholder="ファイルをアップロードすると内容がここに表示されます..."></textarea>
+
+    <div class="sb-section">
+      <div class="sb-label">要件定義書</div>
+      <div class="upload-zone" id="upload-zone" ondragover="dOver(event)" ondragleave="dLeave()" ondrop="dDrop(event)">
+        <input type="file" id="file-input" accept=".txt" onchange="fileSelect(event)" />
+        <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
+        <div class="upload-label">ファイルをドロップ</div>
+        <div class="upload-hint">.txt 形式のみ対応</div>
+      </div>
+      <div class="file-chip" id="file-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="file-chip-name" id="file-name"></span>
+        <button class="fc-rm" onclick="clearFile()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="btn-grp">
+        <button class="btn btn-purple" id="btn-amb" onclick="detectAmbiguity()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          曖昧性を自動検出
+        </button>
+        <button class="btn btn-outline" id="btn-review" onclick="reviewSpec()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          仕様をレビュー
+        </button>
+        <button class="btn btn-outline" id="btn-gen" onclick="generateDiagram()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          シーケンス図を生成
+        </button>
+      </div>
+    </div>
+
+    <div class="spec-prev">
+      <div class="sb-label">読み込み内容</div>
+      <textarea class="spec-ta" id="req-text" readonly placeholder="ファイルをアップロードすると内容がここに表示されます"></textarea>
     </div>
   </aside>
 
+  <!-- MAIN -->
   <main class="main">
-    <header class="main-header">
-      <span class="main-title">🔍 生成結果</span>
-      <span class="badge">Claude powered</span>
-    </header>
-    <div class="main-body">
-      <div class="preview-panel">
-        <div class="panel-header">
-          <span class="panel-title">📊 シーケンス図プレビュー</span>
-          <button class="btn-copy" onclick="copyCode()">コードをコピー</button>
-        </div>
-        <div class="preview-box" id="diagram-preview">
-          <div class="preview-placeholder">
-            ← 要件定義書（.txt）をアップロードして<br>
-            「シーケンス図を自動生成する」を押してください
-          </div>
-        </div>
-        <div class="loading-overlay" id="loading-overlay">
-          <div class="spinner"></div>
-          <div class="loading-text">Claudeが分析中...</div>
-        </div>
+    <!-- パイプライン -->
+    <div class="topbar">
+      <div class="pipeline">
+        <div class="pip" id="p1"><span class="num">1</span>アップロード</div>
+        <div class="pip-arr">›</div>
+        <div class="pip" id="p2"><span class="num">2</span>曖昧性検出</div>
+        <div class="pip-arr">›</div>
+        <div class="pip" id="p3"><span class="num">3</span>仕様レビュー</div>
+        <div class="pip-arr">›</div>
+        <div class="pip" id="p4"><span class="num">4</span>図を生成</div>
+        <div class="pip-arr">›</div>
+        <div class="pip" id="p5"><span class="num">5</span>保存・承認</div>
       </div>
-      <div class="editor-panel">
-        <div class="panel-header" style="background:#1e1e1e; border-bottom-color:#333;">
-          <span class="panel-title" style="color:#888;">📝 Mermaidコード（編集可能）</span>
-          <button class="btn-copy" style="background:#2d2d2d;border-color:#555;color:#aaa;" onclick="reRender()">再レンダリング</button>
-        </div>
-        <textarea class="mermaid-editor" id="mermaid-editor"
-          placeholder="生成されたMermaidコードがここに表示されます。直接編集することもできます。"
-          spellcheck="false"></textarea>
+      <div class="topbar-right">
+        <button class="btn-sm amber" id="btn-diff" onclick="detectDiff()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+          差分を検出
+        </button>
+        <button class="btn-sm blue" id="btn-save" onclick="openSaveModal()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+          GitHubに保存
+        </button>
+        <button class="btn-sm purple" id="btn-pr" onclick="switchTab('pr')" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 009 9"/></svg>
+          Pull Request
+        </button>
       </div>
     </div>
-    <div class="chat-section">
-      <textarea class="chat-input" id="chat-input" rows="1"
-        placeholder="追加の要望を入力... 例：「エラーハンドリングを追加して」「参加者名を英語にして」"
-        onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="btn-send" id="btn-send" onclick="sendChat()" disabled>修正依頼 ↗</button>
+
+    <!-- タブ -->
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tab-btn-amb" onclick="switchTab('amb')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        曖昧性検出 <span class="sdot" id="dot-amb"></span>
+      </button>
+      <button class="tab-btn" id="tab-btn-review" onclick="switchTab('review')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        仕様レビュー <span class="sdot" id="dot-review"></span>
+      </button>
+      <button class="tab-btn" id="tab-btn-diag" onclick="switchTab('diag')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        シーケンス図 <span class="sdot" id="dot-diag"></span>
+      </button>
+      <button class="tab-btn" id="tab-btn-pr" onclick="switchTab('pr')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 009 9"/></svg>
+        Pull Request <span class="sdot" id="dot-pr"></span>
+      </button>
+    </div>
+
+    <!-- タブ: 曖昧性検出 -->
+    <div class="tab-pane active" id="tab-amb" style="position:relative;">
+      <div class="amb-body" id="amb-body">
+        <div class="empty-st" id="amb-empty">
+          <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <h3>曖昧性を自動検出</h3>
+          <p>要件定義書をアップロードし「曖昧性を自動検出」を実行すると、LLMが誤解しやすい箇所を特定して形式的定義で補完します</p>
+        </div>
+        <div id="amb-result"></div>
+      </div>
+      <div class="loading-mask" id="loading-amb"><div class="spinner"></div><div class="spin-label">曖昧性を分析しています</div></div>
+    </div>
+
+    <!-- タブ: 仕様レビュー -->
+    <div class="tab-pane" id="tab-review" style="position:relative;">
+      <div class="amb-body" id="review-body">
+        <div class="empty-st" id="review-empty">
+          <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+          <h3>仕様レビューを開始</h3>
+          <p>AIが明確性・完全性・一貫性・実装可能性の4観点で分析します</p>
+        </div>
+        <div id="review-result"></div>
+      </div>
+      <div class="loading-mask" id="loading-review"><div class="spinner"></div><div class="spin-label">仕様を分析しています</div></div>
+    </div>
+
+    <!-- タブ: シーケンス図 -->
+    <div class="tab-pane" id="tab-diag">
+      <div class="diff-banner" id="diff-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+        <div class="diff-banner-text" id="diff-text"></div>
+      </div>
+      <div class="diag-pane">
+        <div class="prev-area">
+          <div class="area-hdr">
+            <span class="area-hdr-title">Preview</span>
+            <div style="display:flex;gap:6px;">
+              <button class="mini-btn" onclick="copyCode()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                コードをコピー
+              </button>
+            </div>
+          </div>
+          <div class="prev-canvas" id="diag-preview">
+            <div class="empty-st">
+              <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <h3>シーケンス図を生成</h3>
+              <p>仕様のレビュー後「シーケンス図を生成」を実行してください</p>
+            </div>
+          </div>
+          <div class="loading-mask" id="loading-diag"><div class="spinner"></div><div class="spin-label">シーケンス図を生成しています</div></div>
+        </div>
+        <div class="code-area">
+          <div class="code-hdr">
+            <span class="code-lang">mermaid</span>
+            <button class="mini-btn" onclick="reRender()" style="border-color:rgba(255,255,255,0.08);color:rgba(255,255,255,0.28);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+              再レンダリング
+            </button>
+          </div>
+          <textarea class="code-editor" id="mermaid-editor" placeholder="生成されたMermaidコードがここに表示されます" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div class="chat-bar">
+        <textarea class="chat-ta" id="chat-input" rows="1" placeholder="修正を依頼する — 例：エラーハンドリングを追加、参加者名を英語に" onkeydown="chatKey(event)" oninput="autoH(this)"></textarea>
+        <button class="btn-send" id="btn-send" onclick="sendChat()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          送信
+        </button>
+      </div>
+    </div>
+
+    <!-- タブ: Pull Request -->
+    <div class="tab-pane" id="tab-pr">
+      <div class="pr-body">
+        <div class="pr-form">
+          <div class="pr-form-hdr"><div class="pr-form-title">Pull Request を作成する</div></div>
+          <div class="pr-form-body">
+            <div>
+              <label class="field-label">PR タイトル</label>
+              <input class="field-input" type="text" id="pr-title" placeholder="例：ログイン機能の仕様を更新" value="仕様の更新" />
+            </div>
+            <div>
+              <label class="field-label">変更の概要（AIがPR説明文を自動生成します）</label>
+              <textarea class="field-textarea" id="pr-desc" placeholder="例：ユーザー認証フローにエラーハンドリングを追加しました"></textarea>
+            </div>
+            <button class="btn btn-blue" id="btn-create-pr" onclick="createPR()" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 009 9"/></svg>
+              Pull Request を作成する
+            </button>
+          </div>
+        </div>
+
+        <div class="pr-result" id="pr-result">
+          <div class="pr-result-title">Pull Request を作成しました</div>
+          <a class="pr-result-link" id="pr-link" href="#" target="_blank"></a>
+          <div class="pr-info-text">
+            GitHub上でレビュー・承認後にマージしてください。<br>
+            変更履歴がコミット履歴として永続的に残ります。
+          </div>
+        </div>
+
+        <div class="result-card" style="margin-top:4px;">
+          <div class="card-hdr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span class="card-hdr-title">Pull Request フローについて</span>
+          </div>
+          <div class="card-body">仕様駆動開発の原則3「仕様は変更と反復が前提」を実践するフローです。
+
+1. SpecFlowで仕様を更新・シーケンス図を生成
+2. 「Pull Requestを作成する」→ 新しいブランチが自動作成される
+3. AIがPR説明文（変更理由・影響範囲・レビューポイント）を自動生成
+4. GitHubでチームがレビュー・コメント・承認
+5. 承認後にマージ → 変更履歴として永続的に記録
+
+この承認フローにより「誰が・いつ・なぜ仕様を変更したか」が追跡可能になります。</div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- 保存モーダル -->
+<div id="save-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;">
+  <div style="background:var(--panel);border:1px solid var(--b1);border-radius:var(--rl);padding:24px;width:400px;max-width:90vw;animation:fadeUp 0.2s ease;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">GitHubに保存</div>
+    <div style="font-size:12px;color:var(--t1);margin-bottom:18px;line-height:1.7;">仕様書・シーケンス図・READMEを自動更新します。変更履歴はコミット履歴として残ります。</div>
+    <div style="margin-bottom:14px;">
+      <label class="field-label">コミットメッセージ</label>
+      <input class="field-input" type="text" id="commit-msg" placeholder="例：ログイン機能の仕様を更新" value="仕様を更新" />
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeSaveModal()" style="padding:8px 16px;border-radius:var(--r);border:1px solid var(--b1);background:transparent;color:var(--t1);font-family:var(--sans);font-size:13px;cursor:pointer;">キャンセル</button>
+      <button onclick="saveToGithub()" style="padding:8px 16px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+        保存する
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-  mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+mermaid.initialize({ startOnLoad:false, theme:'default', securityLevel:'loose' });
 
-  let requirementsText = '';
-  let currentCode = '';
-  let history = [];
+let reqText='', improvedSpec='', enhancedSpec='', currentCode='', history=[];
 
-  function showToast(msg, type = 'info') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast ' + type + ' visible';
-    setTimeout(() => t.classList.remove('visible'), 3000);
+const ICONS = {
+  success:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  error:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+  info:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  warn:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+};
+
+function toast(msg, type='info') {
+  const w=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=ICONS[type]+msg;
+  w.appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+}
+
+function switchTab(n) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-btn-'+n).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+}
+
+function updatePip(step) {
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('p'+i);
+    el.classList.remove('active','done');
+    if(i<step) el.classList.add('done');
+    else if(i===step) el.classList.add('active');
   }
+}
 
-  function handleFileSelect(e) { if (e.target.files[0]) loadFile(e.target.files[0]); }
-  function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
-  function handleDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
-  function handleDrop(e) {
-    e.preventDefault();
-    document.getElementById('upload-zone').classList.remove('dragover');
-    const f = e.dataTransfer.files[0];
-    if (f && f.name.endsWith('.txt')) loadFile(f);
-    else showToast('.txtファイルのみ対応しています', 'error');
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+function extractMermaid(t){ const m=t.match(/```mermaid\n?([\s\S]*?)```/); return m?m[1].trim():null; }
+
+// ── ファイル ──
+function fileSelect(e){ if(e.target.files[0]) loadFile(e.target.files[0]); }
+function dOver(e){ e.preventDefault(); document.getElementById('upload-zone').classList.add('drag'); }
+function dLeave(){ document.getElementById('upload-zone').classList.remove('drag'); }
+function dDrop(e){
+  e.preventDefault(); document.getElementById('upload-zone').classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.name.endsWith('.txt')) loadFile(f);
+  else toast('.txt ファイルのみ対応しています','error');
+}
+
+function loadFile(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    reqText=e.target.result;
+    document.getElementById('req-text').value=reqText;
+    document.getElementById('file-name').textContent=file.name;
+    document.getElementById('file-chip').classList.add('on');
+    document.getElementById('btn-amb').disabled=false;
+    document.getElementById('btn-review').disabled=false;
+    updatePip(1);
+    toast(file.name+' を読み込みました','success');
+  };
+  r.readAsText(file,'UTF-8');
+}
+
+function clearFile(){
+  reqText='';
+  document.getElementById('req-text').value='';
+  document.getElementById('file-chip').classList.remove('on');
+  document.getElementById('file-input').value='';
+  ['btn-amb','btn-review','btn-gen','btn-diff','btn-save','btn-pr','btn-create-pr'].forEach(id=>{
+    document.getElementById(id).disabled=true;
+  });
+  updatePip(0);
+}
+
+// ── 曖昧性検出 ──
+async function detectAmbiguity(){
+  if(!reqText) return;
+  document.getElementById('loading-amb').classList.add('on');
+  document.getElementById('btn-amb').disabled=true;
+  updatePip(2);
+  switchTab('amb');
+  try{
+    const res=await fetch('/detect_ambiguity',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requirements:reqText})});
+    const data=await res.json();
+    if(data.error){toast(data.error,'error');return;}
+    enhancedSpec=data.enhanced;
+    renderAmbReport(data.report, data.enhanced);
+    document.getElementById('dot-amb').classList.add('done');
+    document.getElementById('btn-review').disabled=false;
+    updatePip(3);
+    toast('曖昧性の検出が完了しました','success');
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('loading-amb').classList.remove('on');document.getElementById('btn-amb').disabled=false;}
+}
+
+function renderAmbReport(report, enhanced){
+  document.getElementById('amb-empty').style.display='none';
+  const c=document.getElementById('amb-result'); c.innerHTML='';
+  const card=document.createElement('div'); card.className='result-card';
+  card.innerHTML=`<div class="card-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="card-hdr-title">曖昧性検出レポート</span></div><div class="card-body">${esc(report.split('## 補完済み要件定義書')[0])}</div>`;
+  c.appendChild(card);
+  if(enhanced){
+    const ec=document.createElement('div'); ec.className='enhanced-card';
+    ec.innerHTML=`<div class="enhanced-hdr"><div class="enhanced-hdr-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span class="enhanced-title">形式的定義による補完済み要件書</span></div><button class="btn-use btn-use-purple" onclick="useEnhanced()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>この補完済み要件でシーケンス図を生成</button></div><div class="enhanced-body"><pre class="enhanced-pre">${esc(enhanced)}</pre></div>`;
+    c.appendChild(ec);
   }
+}
 
-  function loadFile(file) {
-    const r = new FileReader();
-    r.onload = (e) => {
-      requirementsText = e.target.result;
-      document.getElementById('req-text').value = requirementsText;
-      document.getElementById('file-name').textContent = file.name;
-      document.getElementById('file-info').classList.add('visible');
-      document.getElementById('btn-generate').disabled = false;
-      showToast('ファイルを読み込みました', 'success');
-    };
-    r.readAsText(file, 'UTF-8');
+function useEnhanced(){
+  if(!enhancedSpec) return;
+  reqText=enhancedSpec;
+  document.getElementById('req-text').value=enhancedSpec;
+  toast('補完済み要件定義書を適用しました','success');
+  generateDiagram();
+}
+
+// ── 仕様レビュー ──
+async function reviewSpec(){
+  if(!reqText) return;
+  document.getElementById('loading-review').classList.add('on');
+  document.getElementById('btn-review').disabled=true;
+  switchTab('review');
+  try{
+    const res=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requirements:reqText})});
+    const data=await res.json();
+    if(data.error){toast(data.error,'error');return;}
+    improvedSpec=data.improved;
+    renderReview(data.review, data.improved);
+    document.getElementById('dot-review').classList.add('done');
+    document.getElementById('btn-gen').disabled=false;
+    updatePip(4);
+    toast('仕様レビューが完了しました','success');
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('loading-review').classList.remove('on');document.getElementById('btn-review').disabled=false;}
+}
+
+function renderReview(review, improved){
+  document.getElementById('review-empty').style.display='none';
+  const c=document.getElementById('review-result'); c.innerHTML='';
+  const card=document.createElement('div'); card.className='result-card';
+  card.innerHTML=`<div class="card-hdr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="card-hdr-title">分析レポート</span></div><div class="card-body">${esc(review.split('## 改善済み仕様書')[0])}</div>`;
+  c.appendChild(card);
+  if(improved){
+    const ic=document.createElement('div'); ic.className='improved-card';
+    ic.innerHTML=`<div class="improved-hdr"><div class="improved-hdr-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span class="improved-title">改善済み仕様書</span></div><button class="btn-use btn-use-green" onclick="useImproved()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>この仕様でシーケンス図を生成</button></div><div class="improved-body"><pre class="improved-pre">${esc(improved)}</pre></div>`;
+    c.appendChild(ic);
   }
+}
 
-  function clearFile() {
-    requirementsText = '';
-    document.getElementById('req-text').value = '';
-    document.getElementById('file-info').classList.remove('visible');
-    document.getElementById('file-input').value = '';
-    document.getElementById('btn-generate').disabled = true;
+function useImproved(){
+  if(!improvedSpec) return;
+  reqText=improvedSpec;
+  document.getElementById('req-text').value=improvedSpec;
+  toast('改善済み仕様書を適用しました','success');
+  generateDiagram();
+}
+
+// ── シーケンス図生成 ──
+async function generateDiagram(){
+  if(!reqText) return;
+  switchTab('diag');
+  document.getElementById('loading-diag').classList.add('on');
+  document.getElementById('btn-gen').disabled=true;
+  history=[];
+  try{
+    const res=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requirements:reqText})});
+    const data=await res.json();
+    if(data.error){toast(data.error,'error');return;}
+    const code=extractMermaid(data.reply);
+    if(code){
+      currentCode=code;
+      document.getElementById('mermaid-editor').value=code;
+      await renderMermaid(code);
+      document.getElementById('btn-send').disabled=false;
+      document.getElementById('btn-diff').disabled=false;
+      document.getElementById('btn-save').disabled=false;
+      document.getElementById('btn-pr').disabled=false;
+      document.getElementById('btn-create-pr').disabled=false;
+      document.getElementById('dot-diag').classList.add('done');
+      history.push({role:'user',content:'要件定義書からシーケンス図を生成してください。'});
+      history.push({role:'assistant',content:data.reply});
+      updatePip(5);
+      toast('シーケンス図を生成しました','success');
+    }else{ toast('コードが見つかりませんでした','error'); }
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('loading-diag').classList.remove('on');document.getElementById('btn-gen').disabled=false;}
+}
+
+async function renderMermaid(code){
+  const el=document.getElementById('diag-preview');
+  try{
+    const {svg}=await mermaid.render('mmd-'+Date.now(), code);
+    el.innerHTML=svg;
+  }catch{
+    el.innerHTML='<div style="color:#ef4444;font-size:13px;text-align:center;">構文エラー: コードを確認してください</div>';
   }
+}
 
-  async function renderMermaid(code) {
-    const preview = document.getElementById('diagram-preview');
-    try {
-      const { svg } = await mermaid.render('mmd-' + Date.now(), code);
-      preview.innerHTML = svg;
-    } catch {
-      preview.innerHTML = '<div style="color:#c0392b;font-size:13px;text-align:center;">構文エラー: コードを確認してください</div>';
+async function reRender(){
+  const code=document.getElementById('mermaid-editor').value.trim();
+  if(!code) return;
+  currentCode=code;
+  await renderMermaid(code);
+  toast('再レンダリングしました','info');
+}
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text||!currentCode) return;
+  input.value=''; autoH(input);
+  document.getElementById('btn-send').disabled=true;
+  document.getElementById('loading-diag').classList.add('on');
+  try{
+    const res=await fetch('/refine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({current_code:currentCode,request:text,history})});
+    const data=await res.json();
+    if(data.error){toast(data.error,'error');return;}
+    const code=extractMermaid(data.reply);
+    if(code){
+      currentCode=code;
+      document.getElementById('mermaid-editor').value=code;
+      await renderMermaid(code);
+      history.push({role:'user',content:text});
+      history.push({role:'assistant',content:data.reply});
+      toast('修正しました','success');
     }
-  }
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('loading-diag').classList.remove('on');document.getElementById('btn-send').disabled=false;}
+}
 
-  async function reRender() {
-    const code = document.getElementById('mermaid-editor').value.trim();
-    if (!code) return;
-    currentCode = code;
-    await renderMermaid(code);
-    showToast('再レンダリングしました', 'info');
-  }
+function copyCode(){
+  if(!currentCode){toast('コードがまだ生成されていません','error');return;}
+  navigator.clipboard.writeText(currentCode).then(()=>toast('コードをコピーしました','success'));
+}
 
-  function extractMermaid(text) {
-    const m = text.match(/```mermaid\n?([\s\S]*?)```/);
-    return m ? m[1].trim() : null;
-  }
-
-  function setLoading(v) {
-    document.getElementById('loading-overlay').classList.toggle('visible', v);
-    document.getElementById('btn-generate').disabled = v || !requirementsText;
-    document.getElementById('btn-send').disabled = v || !currentCode;
-  }
-
-  async function generateDiagram() {
-    if (!requirementsText) return;
-    setLoading(true);
-    history = [];
-    try {
-      const res = await fetch('/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requirements: requirementsText })
-      });
-      const data = await res.json();
-      if (data.error) { showToast(data.error, 'error'); return; }
-      const code = extractMermaid(data.reply);
-      if (code) {
-        currentCode = code;
-        document.getElementById('mermaid-editor').value = code;
-        await renderMermaid(code);
-        document.getElementById('btn-send').disabled = false;
-        history.push({ role: 'user', content: '要件定義書からシーケンス図を生成してください。' });
-        history.push({ role: 'assistant', content: data.reply });
-        showToast('シーケンス図を生成しました！', 'success');
-      } else {
-        showToast('コードが見つかりませんでした。もう一度お試しください。', 'error');
-      }
-    } catch (e) {
-      showToast('エラー: ' + e.message, 'error');
-    } finally {
-      setLoading(false);
+// ── 差分検出 ──
+async function detectDiff(){
+  const spec=improvedSpec||enhancedSpec||reqText;
+  if(!spec){toast('仕様が読み込まれていません','error');return;}
+  toast('GitHubの前回保存と比較しています...','info');
+  document.getElementById('btn-diff').disabled=true;
+  try{
+    const res=await fetch('/detect_diff',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({current_spec:spec})});
+    const data=await res.json();
+    const banner=document.getElementById('diff-banner');
+    const diffText=document.getElementById('diff-text');
+    switchTab('diag');
+    if(!data.has_previous){
+      banner.className='diff-banner changed visible';
+      diffText.innerHTML='GitHubにまだ仕様書が保存されていません。今回が初回の保存になります。';
+      toast('初回保存です','info');
+    }else if(data.no_change){
+      banner.className='diff-banner same visible';
+      diffText.innerHTML='前回の保存から変更はありません。';
+      toast('変更なし','info');
+    }else{
+      banner.className='diff-banner changed visible';
+      diffText.innerHTML='<strong>変更が検出されました</strong><div class="diff-detail">'+esc(data.diff_report)+'</div>';
+      toast('変更を検出しました','warn');
     }
-  }
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('btn-diff').disabled=false;}
+}
 
-  async function sendChat() {
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text || !currentCode) return;
-    input.value = '';
-    autoResize(input);
-    setLoading(true);
-    try {
-      const res = await fetch('/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current_code: currentCode, request: text, history })
-      });
-      const data = await res.json();
-      if (data.error) { showToast(data.error, 'error'); return; }
-      const code = extractMermaid(data.reply);
-      if (code) {
-        currentCode = code;
-        document.getElementById('mermaid-editor').value = code;
-        await renderMermaid(code);
-        history.push({ role: 'user', content: text });
-        history.push({ role: 'assistant', content: data.reply });
-        showToast('修正しました！', 'success');
-      } else {
-        showToast('修正後のコードが見つかりませんでした', 'error');
-      }
-    } catch (e) {
-      showToast('エラー: ' + e.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
+// ── GitHubに保存 ──
+function openSaveModal(){ document.getElementById('save-modal').style.display='flex'; }
+function closeSaveModal(){ document.getElementById('save-modal').style.display='none'; }
 
-  function copyCode() {
-    if (!currentCode) { showToast('コードがまだ生成されていません', 'error'); return; }
-    navigator.clipboard.writeText(currentCode).then(() => showToast('コードをコピーしました', 'success'));
-  }
+async function saveToGithub(){
+  const msg=document.getElementById('commit-msg').value.trim()||'仕様を更新';
+  closeSaveModal();
+  document.getElementById('btn-save').disabled=true;
+  toast('GitHubに保存しています...','info');
+  try{
+    const res=await fetch('/save_to_github',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({specification:improvedSpec||enhancedSpec||reqText,mermaid_code:currentCode,commit_message:msg})});
+    const data=await res.json();
+    if(data.error){toast('保存失敗: '+data.error,'error');return;}
+    toast('GitHubに保存しました','success');
+    setTimeout(()=>window.open(data.url,'_blank'),800);
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('btn-save').disabled=false;}
+}
 
-  function handleChatKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
-  }
+// ── Pull Request ──
+async function createPR(){
+  const title=document.getElementById('pr-title').value.trim()||'仕様の更新';
+  const desc=document.getElementById('pr-desc').value.trim();
+  const spec=improvedSpec||enhancedSpec||reqText;
+  if(!spec&&!currentCode){toast('仕様またはシーケンス図が必要です','error');return;}
+  document.getElementById('btn-create-pr').disabled=true;
+  toast('Pull Requestを作成しています...','info');
+  try{
+    const res=await fetch('/create_pull_request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({specification:spec,mermaid_code:currentCode,pr_title:title,pr_body:desc})});
+    const data=await res.json();
+    if(data.error){toast('PR作成失敗: '+data.error,'error');return;}
+    const result=document.getElementById('pr-result');
+    const link=document.getElementById('pr-link');
+    result.classList.add('visible');
+    link.href=data.pr_url;
+    link.textContent=data.pr_url;
+    document.getElementById('dot-pr').classList.add('done');
+    toast(data.message,'success');
+    setTimeout(()=>window.open(data.pr_url,'_blank'),800);
+  }catch(e){toast('エラー: '+e.message,'error');}
+  finally{document.getElementById('btn-create-pr').disabled=false;}
+}
 
-  function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-  }
+function chatKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+function autoH(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 </script>
 </body>
 </html>
