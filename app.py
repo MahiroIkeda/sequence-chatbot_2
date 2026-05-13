@@ -122,9 +122,15 @@ def call_claude(user_message, system_prompt=None, history=None, max_tokens=2000)
 
 
 def extract_section(text, heading):
-    """レスポンステキストから特定の見出し以降のテキストを抽出する"""
-    if heading in text:
-        return text.split(heading)[-1].strip()
+    """レスポンステキストから特定の見出し以降のテキストを抽出する。
+    見出しレベル（#, ##, ###）や太字（**）に依存せずキーワードで検索する。
+    """
+    keyword = heading.lstrip('#').strip().lstrip('*').rstrip('*').strip()
+    lines = text.split('\n')
+    for i, line in enumerate(lines):
+        stripped = line.strip().lstrip('#').strip().lstrip('*').rstrip('*').strip()
+        if stripped == keyword or keyword in stripped:
+            return '\n'.join(lines[i+1:]).strip()
     return ""
 
 
@@ -283,7 +289,7 @@ def detect_ambiguity():
     reply = call_claude(
         f"以下の要件定義書を分析し、曖昧性を検出して形式的定義で補完してください。\n\n【要件定義書】\n{requirements}",
         system_prompt=PROMPT_AMBIGUITY,
-        max_tokens=4000,
+        max_tokens=8000,
     )
     return jsonify({
         "report": reply,
@@ -301,7 +307,7 @@ def review():
     reply = call_claude(
         f"以下の要件定義書をレビューしてください。\n\n{requirements}",
         system_prompt=PROMPT_REVIEW,
-        max_tokens=3000,
+        max_tokens=8000,
     )
     return jsonify({
         "review": reply,
@@ -332,6 +338,7 @@ def generate():
     reply = call_claude(
         f"以下の要件定義書からシーケンス図を生成してください。\n\n{requirements}",
         system_prompt=system_prompt,
+        max_tokens=4000,
     )
     return jsonify({"reply": reply})
 

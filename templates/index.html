@@ -608,7 +608,7 @@ function renderAmbReport(report, enhanced){
       </div>
       <div class="enhanced-body"><pre class="enhanced-pre">${esc(enhanced)}</pre></div>
       <div class="approval-bar" id="approval-bar">
-        <span class="approval-bar-label">この補完内容でよければ承認してください。承認後にシーケンス図を生成できます。</span>
+        <span class="approval-bar-label">この補完内容でよければ承認してください。承認後に仕様レビューへ進みます。</span>
         <button class="btn-use btn-use-gray" onclick="redetectAmbiguity()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
           修正して再生成
@@ -626,20 +626,22 @@ function approveEnhanced(){
   if(!enhancedSpec) return;
   reqText=enhancedSpec;
   document.getElementById('req-text').value=enhancedSpec;
-  // 承認バーをバッジに切り替え
+  // 承認バーをバッジ＋仕様レビューボタンに切り替え
   const bar=document.getElementById('approval-bar');
   bar.innerHTML=`
     <span class="approved-badge">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       承認済み — 補完済み要件を適用しました
     </span>
-    <button class="btn-use btn-use-green" onclick="generateDiagram()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      シーケンス図を生成
+    <button class="btn-use btn-use-green" onclick="reviewSpec()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      次へ：仕様をレビューする
     </button>`;
-  // サイドバーのシーケンス図ボタンも有効化
-  document.getElementById('btn-gen').disabled=false;
-  toast('補完済み要件を承認しました。シーケンス図を生成できます。','success');
+  // サイドバーの仕様レビューボタンを有効化（シーケンス図はまだ無効のまま）
+  document.getElementById('btn-review').disabled=false;
+  document.getElementById('btn-gen').disabled=true;
+  updatePip(3);
+  toast('補完済み要件を承認しました。次に仕様レビューを実行してください。','success');
 }
 
 function redetectAmbiguity(){
